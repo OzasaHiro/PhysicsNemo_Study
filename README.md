@@ -19,3 +19,7 @@ HTML は概要説明資料、PDF は Notebook 実行結果を保存した補助�
 ## Status
 
 Work in progress. 資料構成、実行環境、配布用データの扱いは今後も更新します。
+
+## License And Notices
+
+本リポジトリ独自の日本語教材・補助資料は、学習・教育目的での利用を想定しています。利用条件は [LICENSE](LICENSE)、第三者由来の教材・データ・商標に関する注意は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照してください。
