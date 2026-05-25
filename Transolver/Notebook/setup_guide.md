@@ -54,15 +54,10 @@ Peak CUDA memory allocated: 約2.5 GB
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-pip install numpy matplotlib scipy einops
-pip install jupyterlab notebook nbformat nbconvert ipykernel
+pip install -r Transolver/requirements.txt
 ```
 
-Notebook 1/2 の 3D 表示まで試す場合は、環境に応じて次も追加します。
-
-```bash
-pip install pyvista vtk
-```
+`Transolver/requirements.txt` は Notebook 1/2 を実行するための軽量セットです。Notebook 3 の full training では、CUDA 対応 PyTorch と追加コード・外部データが別途必要です。
 
 Jupyter Lab を起動する例:
 
