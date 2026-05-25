@@ -1,3 +1,10 @@
 .DS_Store
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
 *.tmp
 *.log
+.venv/
+*.pt
+*.pth
+*.ckpt
