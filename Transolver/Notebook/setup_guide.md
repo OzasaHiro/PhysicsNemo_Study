@@ -25,9 +25,10 @@
 概要を短時間で把握する場合は、次の順番を推奨します。
 
 1. `../transformer_transolver_flow_infographic.html`
-2. `../01_transformer_bottleneck_ja_handout.pdf`
-3. `../02_physics_attention_transolver_ja_handout.pdf`
-4. `../03_training_transolver_shiftwing_caseb_ja_full200_executed_handout.pdf`
+2. `../Transolver_Architecture.pdf`
+3. `../01_transformer_bottleneck_ja_handout.pdf`
+4. `../02_physics_attention_transolver_ja_handout.pdf`
+5. `../03_training_transolver_shiftwing_caseb_ja_full200_executed_handout.pdf`
 
 ## 推奨環境
 
