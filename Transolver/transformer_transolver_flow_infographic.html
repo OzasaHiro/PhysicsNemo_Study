@@ -1,0 +1,1374 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transformer と Transolver の処理フロー補助資料</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #53606f;
+      --paper: #fbfaf7;
+      --surface: #ffffff;
+      --line: #d8dee6;
+      --navy: #203047;
+      --teal: #0f766e;
+      --mint: #d9f3ea;
+      --coral: #d45d4c;
+      --coral-soft: #fde6de;
+      --amber: #c8871a;
+      --amber-soft: #fff1c9;
+      --violet: #6d5bd0;
+      --violet-soft: #ece9ff;
+      --green: #4f9b5f;
+      --blue-soft: #e8f0f7;
+      --shadow: 0 14px 40px rgba(23, 32, 42, 0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", "Segoe UI", sans-serif;
+      line-height: 1.75;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .hero {
+      background: #183044;
+      color: #fff;
+      border-bottom: 8px solid #e7b44f;
+    }
+
+    .hero-inner {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 48px 0 34px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #f7cf7f;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2.4rem;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 18px 0 0;
+      color: #e9eef5;
+      font-size: 1.05rem;
+      max-width: 62ch;
+    }
+
+    .hero-visual {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .hero-visual svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .band {
+      padding: 42px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .band:nth-of-type(odd) {
+      background: #fff;
+    }
+
+    .inner {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 1.55rem;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 1.06rem;
+      line-height: 1.45;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    code {
+      padding: 0.08em 0.32em;
+      border-radius: 4px;
+      background: #edf2f6;
+      color: #17202a;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .section-lead {
+      max-width: 78ch;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .panel.soft {
+      box-shadow: none;
+      background: #fcfdff;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .step {
+      position: relative;
+      min-height: 180px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-top: 5px solid var(--teal);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .step:nth-child(2) {
+      border-top-color: var(--amber);
+    }
+
+    .step:nth-child(3) {
+      border-top-color: var(--coral);
+    }
+
+    .step:nth-child(4) {
+      border-top-color: var(--violet);
+    }
+
+    .step:nth-child(5) {
+      border-top-color: var(--green);
+    }
+
+    .step-number {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--navy);
+      font-weight: 800;
+      font-size: 0.86rem;
+      margin-bottom: 10px;
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: var(--mint);
+      color: #084d46;
+      font-weight: 700;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .chip.alt {
+      background: var(--amber-soft);
+      color: #6f4700;
+    }
+
+    .chip.warn {
+      background: var(--coral-soft);
+      color: #8d2f25;
+    }
+
+    .bars {
+      display: flex;
+      align-items: end;
+      gap: 5px;
+      height: 56px;
+      margin-top: 14px;
+    }
+
+    .bar {
+      width: 13px;
+      border-radius: 4px 4px 0 0;
+      background: var(--teal);
+    }
+
+    .bar:nth-child(2) {
+      background: var(--amber);
+    }
+
+    .bar:nth-child(3) {
+      background: var(--coral);
+    }
+
+    .bar:nth-child(4) {
+      background: var(--violet);
+    }
+
+    .bar:nth-child(5) {
+      background: var(--green);
+    }
+
+    .mini-matrix {
+      display: grid;
+      grid-template-columns: repeat(5, 22px);
+      gap: 3px;
+      margin-top: 14px;
+    }
+
+    .cell {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: #dfe6ee;
+    }
+
+    .cell.hot {
+      background: #e7b44f;
+    }
+
+    .cell.mid {
+      background: #79bba3;
+    }
+
+    .cell.low {
+      background: #b8c4d2;
+    }
+
+    .formula {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #17202a;
+      color: #f8fbff;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.84rem;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .compare-item {
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 18px;
+    }
+
+    .compare-item.text-side {
+      border-top: 5px solid var(--teal);
+    }
+
+    .compare-item.physics-side {
+      border-top: 5px solid var(--coral);
+    }
+
+    .token-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .token-row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 10px;
+      align-items: start;
+      font-size: 0.94rem;
+    }
+
+    .label {
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .problem {
+      background: #fff7f4;
+      border-left: 6px solid var(--coral);
+      padding: 16px 18px;
+      border-radius: 8px;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.35rem;
+      line-height: 1.3;
+      color: var(--coral);
+    }
+
+    .svg-wrap {
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .svg-wrap svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .transolver-flow {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .flow-card {
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 16px;
+      min-height: 210px;
+    }
+
+    .flow-card:nth-child(1) {
+      border-top: 5px solid var(--amber);
+    }
+
+    .flow-card:nth-child(2) {
+      border-top: 5px solid var(--teal);
+    }
+
+    .flow-card:nth-child(3) {
+      border-top: 5px solid var(--violet);
+    }
+
+    .flow-card:nth-child(4) {
+      border-top: 5px solid var(--green);
+    }
+
+    .stack-overview {
+      display: grid;
+      grid-template-columns: 1fr auto 1.1fr auto 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .stack-box {
+      min-height: 104px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+    }
+
+    .stack-box strong {
+      display: block;
+      color: var(--navy);
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    .stack-box.mlp {
+      border-top: 5px solid var(--amber);
+    }
+
+    .stack-box.pa {
+      border-top: 5px solid var(--teal);
+      background: #f4fbf8;
+    }
+
+    .stack-box.out {
+      border-top: 5px solid var(--green);
+    }
+
+    .stack-arrow {
+      color: var(--navy);
+      font-weight: 900;
+      font-size: 1.45rem;
+      text-align: center;
+    }
+
+    .qa-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .qa-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      border-top: 5px solid var(--teal);
+    }
+
+    .qa-card:nth-child(2) {
+      border-top-color: var(--amber);
+    }
+
+    .qa-card:nth-child(3) {
+      border-top-color: var(--green);
+    }
+
+    .qa-card:nth-child(4) {
+      border-top-color: var(--violet);
+    }
+
+    .qa-card ul {
+      margin: 12px 0 0;
+      padding-left: 1.15rem;
+    }
+
+    .qa-card li + li {
+      margin-top: 6px;
+    }
+
+    .simple-flow {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .simple-flow-item {
+      background: #eef8f4;
+      border: 1px solid #b8ded1;
+      border-radius: 8px;
+      padding: 14px;
+      font-weight: 800;
+      color: #084d46;
+      text-align: center;
+    }
+
+    .note-box {
+      background: #fffaf0;
+      border-left: 6px solid var(--amber);
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin-top: 18px;
+    }
+
+    .shape-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.94rem;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+
+    .shape-table th,
+    .shape-table td {
+      border: 1px solid var(--line);
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .shape-table th {
+      background: #203047;
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .shape-table tr:nth-child(even) td {
+      background: #f6f8fb;
+    }
+
+    .complexity {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .control {
+      display: grid;
+      gap: 12px;
+    }
+
+    .control label {
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--teal);
+    }
+
+    .value-pair {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .bar-chart {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: 150px 1fr 145px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .track {
+      height: 24px;
+      background: #ecf0f4;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      min-width: 2px;
+      border-radius: 999px;
+    }
+
+    .fill.standard {
+      width: 100%;
+      background: var(--coral);
+    }
+
+    .fill.transolver {
+      width: 12%;
+      background: var(--teal);
+    }
+
+    .callout {
+      margin-top: 18px;
+      background: #eef8f4;
+      border-left: 6px solid var(--teal);
+      border-radius: 8px;
+      padding: 16px 18px;
+    }
+
+    .glossary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .term {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .term strong {
+      display: block;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .footer {
+      background: #17202a;
+      color: #eaf0f6;
+      padding: 28px 0;
+    }
+
+    .footer p {
+      color: #cfd8e3;
+      font-size: 0.92rem;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .accent {
+      color: var(--teal);
+      font-weight: 800;
+    }
+
+    .warn {
+      color: var(--coral);
+      font-weight: 800;
+    }
+
+    @media (max-width: 980px) {
+      .hero-inner,
+      .grid-2,
+      .compare,
+      .complexity {
+        grid-template-columns: 1fr;
+      }
+
+      .pipeline,
+      .flow-grid,
+      .grid-3,
+      .qa-grid,
+      .stack-overview,
+      .glossary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stack-arrow {
+        display: none;
+      }
+
+      .metric-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+      }
+
+      .pipeline,
+      .flow-grid,
+      .grid-3,
+      .qa-grid,
+      .simple-flow,
+      .stack-overview,
+      .glossary {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-row {
+        grid-template-columns: 1fr;
+      }
+
+      .token-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .hero,
+      .footer {
+        background: #fff;
+        color: #000;
+        border: 0;
+      }
+
+      .panel,
+      .step,
+      .flow-card,
+      .metric,
+      .compare-item,
+      .term {
+        box-shadow: none;
+      }
+
+      .band {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">補助資料: 01 Transformer bottleneck / 02 Physics-Attention Transolver</p>
+        <h1>Transformer は何をしていて、Transolver は何を変えたのか</h1>
+        <p class="lead">自然言語の「単語どうしの関係を見る」仕組みを、CFDやPDEのメッシュ点にそのまま使うと何が重くなるのか。TransolverのPhysics-Attentionが、点を少数の代表ベクトル、つまり物理tokenへ集約して処理する流れを図解します。</p>
+      </div>
+      <div class="hero-visual" aria-label="TransformerからTransolverへの概念図">
+        <svg viewBox="0 0 720 410" role="img">
+          <rect x="0" y="0" width="720" height="410" rx="8" fill="#f7fbff"/>
+          <text x="36" y="46" fill="#203047" font-size="24" font-weight="800">全点で話す → 代表で話す</text>
+          <g transform="translate(44 92)">
+            <text x="0" y="-18" fill="#53606f" font-size="15" font-weight="700">標準Attention</text>
+            <g fill="#d45d4c" opacity="0.9">
+              <circle cx="32" cy="36" r="8"/><circle cx="92" cy="24" r="8"/><circle cx="156" cy="50" r="8"/>
+              <circle cx="54" cy="104" r="8"/><circle cx="128" cy="116" r="8"/><circle cx="196" cy="94" r="8"/>
+            </g>
+            <g stroke="#d45d4c" stroke-width="1.5" opacity="0.45">
+              <line x1="32" y1="36" x2="92" y2="24"/><line x1="32" y1="36" x2="156" y2="50"/><line x1="32" y1="36" x2="54" y2="104"/><line x1="32" y1="36" x2="128" y2="116"/><line x1="32" y1="36" x2="196" y2="94"/>
+              <line x1="92" y1="24" x2="156" y2="50"/><line x1="92" y1="24" x2="54" y2="104"/><line x1="92" y1="24" x2="128" y2="116"/><line x1="92" y1="24" x2="196" y2="94"/>
+              <line x1="156" y1="50" x2="54" y2="104"/><line x1="156" y1="50" x2="128" y2="116"/><line x1="156" y1="50" x2="196" y2="94"/>
+              <line x1="54" y1="104" x2="128" y2="116"/><line x1="54" y1="104" x2="196" y2="94"/><line x1="128" y1="116" x2="196" y2="94"/>
+            </g>
+            <text x="0" y="164" fill="#8d2f25" font-size="14" font-weight="700">N点なら N×N の比較</text>
+          </g>
+          <path d="M308 174 L392 174" stroke="#203047" stroke-width="4" marker-end="url(#arrow)"/>
+          <g transform="translate(420 92)">
+            <text x="0" y="-18" fill="#53606f" font-size="15" font-weight="700">Physics-Attention</text>
+            <g fill="#0f766e" opacity="0.9">
+              <circle cx="24" cy="36" r="7"/><circle cx="84" cy="24" r="7"/><circle cx="148" cy="50" r="7"/>
+              <circle cx="46" cy="104" r="7"/><circle cx="120" cy="116" r="7"/><circle cx="188" cy="94" r="7"/>
+            </g>
+            <g fill="#e7b44f" stroke="#203047" stroke-width="2">
+              <circle cx="62" cy="72" r="18"/><circle cx="142" cy="78" r="18"/>
+            </g>
+            <g stroke="#0f766e" stroke-width="2" opacity="0.55">
+              <line x1="24" y1="36" x2="62" y2="72"/><line x1="84" y1="24" x2="62" y2="72"/><line x1="46" y1="104" x2="62" y2="72"/>
+              <line x1="148" y1="50" x2="142" y2="78"/><line x1="120" y1="116" x2="142" y2="78"/><line x1="188" y1="94" x2="142" y2="78"/>
+            </g>
+            <line x1="62" y1="72" x2="142" y2="78" stroke="#6d5bd0" stroke-width="5"/>
+            <text x="0" y="164" fill="#084d46" font-size="14" font-weight="700">N点 → M個の物理tokenへ</text>
+          </g>
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#203047"/>
+            </marker>
+          </defs>
+          <g transform="translate(44 300)">
+            <rect x="0" y="0" width="632" height="56" rx="8" fill="#fff1c9" stroke="#e0c067"/>
+            <text x="18" y="23" fill="#203047" font-size="16" font-weight="800">覚え方</text>
+            <text x="18" y="44" fill="#203047" font-size="15">Transformer: 全員が全員と直接会話。Transolver: 代表で話して結果を各点へ戻す。</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <section class="band">
+    <div class="inner">
+      <h2>1. テキストTransformerの基本フロー</h2>
+      <p class="section-lead">Transformerの中心はSelf-Attentionです。各tokenが「自分は他のtokenの情報をどれくらい参照すべきか」を重みとして計算し、文脈を含んだ表現に更新します。</p>
+      <div class="pipeline">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Tokenize</h3>
+          <p>文を処理単位へ分ける。自然言語では単語やsubwordがtokenです。</p>
+          <div class="chip-row">
+            <span class="chip">圧力</span><span class="chip">が</span><span class="chip">後流</span><span class="chip">で</span><span class="chip">変化</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Embedding</h3>
+          <p>tokenを数値ベクトルへ変換し、順序や位置の情報を足します。</p>
+          <div class="bars" aria-label="埋め込みベクトルの例">
+            <span class="bar" style="height: 24px"></span>
+            <span class="bar" style="height: 46px"></span>
+            <span class="bar" style="height: 34px"></span>
+            <span class="bar" style="height: 53px"></span>
+            <span class="bar" style="height: 30px"></span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Q / K / V</h3>
+          <p>各tokenからQuery, Key, Valueを作る。Queryは「何を探すか」、Keyは「何を持つか」、Valueは「渡す中身」です。</p>
+          <div class="chip-row">
+            <span class="chip alt">Q</span><span class="chip alt">K</span><span class="chip alt">V</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>Attention</h3>
+          <p>QとKの類似度を全token組み合わせで計算し、softmaxで重みにします。</p>
+          <div class="mini-matrix" aria-label="Attention行列の例">
+            <span class="cell hot"></span><span class="cell mid"></span><span class="cell low"></span><span class="cell low"></span><span class="cell low"></span>
+            <span class="cell mid"></span><span class="cell hot"></span><span class="cell low"></span><span class="cell low"></span><span class="cell low"></span>
+            <span class="cell low"></span><span class="cell low"></span><span class="cell hot"></span><span class="cell mid"></span><span class="cell low"></span>
+            <span class="cell low"></span><span class="cell low"></span><span class="cell mid"></span><span class="cell hot"></span><span class="cell mid"></span>
+            <span class="cell low"></span><span class="cell low"></span><span class="cell low"></span><span class="cell mid"></span><span class="cell hot"></span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">5</div>
+          <h3>Update</h3>
+          <p>重みに従ってValueを混ぜ、各tokenを文脈込みの表現へ更新します。</p>
+          <div class="formula">out_i = Σ attention(i,j) · V_j</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="inner">
+      <h2>2. tokenの意味が変わる: 文から物理メッシュへ</h2>
+      <p class="section-lead">CFDやPDEでは、tokenを「単語」ではなく「メッシュ点・表面点・格子点」と見なします。各点は座標、法線、圧力、速度、材料量などの特徴量を持ちます。</p>
+      <div class="compare">
+        <div class="compare-item text-side">
+          <h3>自然言語のtoken</h3>
+          <div class="token-list">
+            <div class="token-row"><span class="label">単位</span><span>単語、subword、記号</span></div>
+            <div class="token-row"><span class="label">位置</span><span>文中の順序が強い意味を持つ</span></div>
+            <div class="token-row"><span class="label">Nの規模</span><span>数十から数千tokenが典型</span></div>
+            <div class="token-row"><span class="label">関係</span><span>遠い単語との関係も文脈として重要</span></div>
+          </div>
+        </div>
+        <div class="compare-item physics-side">
+          <h3>物理モデルのtoken</h3>
+          <div class="token-list">
+            <div class="token-row"><span class="label">単位</span><span>メッシュ点、表面点、セル、観測点</span></div>
+            <div class="token-row"><span class="label">位置</span><span>3D座標、境界、流れ方向、近傍構造が重要</span></div>
+            <div class="token-row"><span class="label">Nの規模</span><span>数万から数十万点になりやすい</span></div>
+            <div class="token-row"><span class="label">関係</span><span>近傍、剥離、後流、境界層など局所性と構造が効く</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>同じSelf-Attentionでも、入力の世界が違います。</strong>
+        テキストでは「文脈の全体参照」が強みですが、物理点群では全点を同じ密度で比較するより、局所的・構造的な相互作用をどう圧縮して扱うかが重要になります。
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="inner">
+      <h2>3. 標準Attentionを物理メッシュへそのまま使う弊害</h2>
+      <p class="section-lead">標準Self-Attentionは、N個の点すべての組み合わせを比較します。点数が増えると、Attention行列だけで計算量とメモリが急増します。</p>
+      <div class="grid-2">
+        <div class="svg-wrap">
+          <svg viewBox="0 0 620 420" role="img" aria-label="物理メッシュと全点比較の概念図">
+            <rect width="620" height="420" fill="#ffffff"/>
+            <text x="26" y="38" fill="#203047" font-size="22" font-weight="800">N点すべてを直接比較</text>
+            <g transform="translate(40 74)">
+              <path d="M36 164 C110 48, 268 16, 482 98 C420 134, 318 156, 168 198 C112 214, 68 205, 36 164 Z" fill="#e8f0f7" stroke="#203047" stroke-width="3"/>
+              <path d="M70 162 C138 78, 266 60, 410 108" fill="none" stroke="#79bba3" stroke-width="4"/>
+              <g fill="#0f766e">
+                <circle cx="86" cy="151" r="5"/><circle cx="125" cy="121" r="5"/><circle cx="170" cy="99" r="5"/><circle cx="218" cy="85" r="5"/><circle cx="270" cy="83" r="5"/>
+                <circle cx="322" cy="92" r="5"/><circle cx="370" cy="107" r="5"/><circle cx="412" cy="123" r="5"/><circle cx="158" cy="176" r="5"/><circle cx="220" cy="160" r="5"/>
+                <circle cx="282" cy="146" r="5"/><circle cx="344" cy="132" r="5"/><circle cx="95" cy="188" r="5"/><circle cx="260" cy="204" r="5"/><circle cx="420" cy="158" r="5"/>
+              </g>
+              <g stroke="#d45d4c" stroke-width="1.3" opacity="0.45">
+                <line x1="86" y1="151" x2="412" y2="123"/><line x1="86" y1="151" x2="270" y2="83"/><line x1="86" y1="151" x2="420" y2="158"/>
+                <line x1="170" y1="99" x2="344" y2="132"/><line x1="95" y1="188" x2="370" y2="107"/><line x1="158" y1="176" x2="420" y2="158"/>
+                <line x1="220" y1="160" x2="322" y2="92"/><line x1="125" y1="121" x2="282" y2="146"/><line x1="260" y1="204" x2="412" y2="123"/>
+              </g>
+            </g>
+            <g transform="translate(44 315)">
+              <rect x="0" y="0" width="532" height="58" rx="8" fill="#fde6de" stroke="#efb0a6"/>
+              <text x="18" y="25" fill="#8d2f25" font-size="18" font-weight="800">Attention行列: N × N</text>
+              <text x="18" y="47" fill="#203047" font-size="15">N=400,000なら 160,000,000,000 個のペアスコア</text>
+            </g>
+          </svg>
+        </div>
+        <div>
+          <div class="problem">
+            <h3>主な問題</h3>
+            <p><span class="warn">計算量:</span> N点どうしで比較するため、計算もメモリも O(N²) になります。</p>
+            <p><span class="warn">幾何の扱い:</span> メッシュは不規則で、点密度や境界条件が場所ごとに違います。単純な順序位置だけでは表しにくい構造があります。</p>
+            <p><span class="warn">物理の局所性:</span> 圧力・速度・熱などは近傍や流れ構造に強く依存します。遠い全点を同じ土俵で密に比較するのは非効率です。</p>
+          </div>
+          <div class="metric-row">
+            <div class="metric">
+              <strong>N²</strong>
+              <span>標準Attentionのペア比較</span>
+            </div>
+            <div class="metric">
+              <strong>160B</strong>
+              <span>N=400k のペア数</span>
+            </div>
+            <div class="metric">
+              <strong>局所性</strong>
+              <span>近い点や流れ構造が重要</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="inner">
+      <h2>4. Transolverの発想: 点を少数のphysics tokenへ集約する</h2>
+      <p class="section-lead">Transolverは、点どうしを直接すべて比較する代わりに、各点を少数のslice、つまり「一時的なまとめ先」へゆるく割り当てます。ここで説明する <span class="accent">Slice → Aggregate → Attend → Deslice</span> は、Transolver全体ではなくPhysics-Attentionモジュールの中身です。</p>
+      <div class="stack-overview" aria-label="Transolver全体像">
+        <div class="stack-box">
+          <strong>生の入力</strong>
+          <p>座標、法線、境界条件、物理量などの元データ。</p>
+        </div>
+        <div class="stack-arrow">→</div>
+        <div class="stack-box mlp">
+          <strong>MLP埋め込み</strong>
+          <p>生の入力を、各点の特徴ベクトル <code>x: (N, C)</code> へ変換する前段。資料のNumPy例ではここを済ませた前提です。</p>
+        </div>
+        <div class="stack-arrow">→</div>
+        <div class="stack-box pa">
+          <strong>Physics-Attention</strong>
+          <p>この資料で詳しく追う部分。Slice、Aggregate、Attend、Desliceで点群を更新します。</p>
+        </div>
+      </div>
+      <div class="note-box" style="margin-bottom: 18px">
+        <strong>位置づけ:</strong>
+        実際のTransolverでは、MLP埋め込みとPhysics-AttentionがTransformer blockの構成要素として使われ、残差接続、正規化、Feed Forward Networkと組み合わされます。そのblockを複数層積み重ねて、最終的な物理量を予測します。
+      </div>
+      <div class="transolver-flow">
+        <div class="svg-wrap">
+          <svg viewBox="0 0 1060 360" role="img" aria-label="TransolverのSlice Aggregate Attend Desliceフロー">
+            <rect width="1060" height="360" fill="#ffffff"/>
+            <defs>
+              <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L9,3 z" fill="#203047"/>
+              </marker>
+            </defs>
+            <text x="30" y="42" fill="#203047" font-size="24" font-weight="800">Slice → Aggregate → Token Attention → Deslice</text>
+
+            <g transform="translate(36 78)">
+              <text x="0" y="0" fill="#c8871a" font-size="17" font-weight="800">1. Slice</text>
+              <text x="0" y="24" fill="#53606f" font-size="14">各点がM個のsliceへゆるく所属</text>
+              <g transform="translate(18 62)" fill="#0f766e">
+                <circle cx="15" cy="22" r="6"/><circle cx="42" cy="15" r="6"/><circle cx="70" cy="29" r="6"/><circle cx="98" cy="18" r="6"/>
+                <circle cx="26" cy="62" r="6"/><circle cx="59" cy="72" r="6"/><circle cx="90" cy="61" r="6"/><circle cx="122" cy="74" r="6"/>
+                <circle cx="144" cy="39" r="6"/><circle cx="160" cy="84" r="6"/>
+              </g>
+              <g transform="translate(28 166)">
+                <rect x="0" y="0" width="132" height="54" rx="6" fill="#fff1c9" stroke="#dfbf68"/>
+                <text x="12" y="23" font-size="14" fill="#203047" font-weight="800">S: (N, M)</text>
+                <text x="12" y="42" font-size="13" fill="#53606f">slice weights</text>
+              </g>
+            </g>
+
+            <path d="M230 184 L314 184" stroke="#203047" stroke-width="3" marker-end="url(#arrow2)"/>
+
+            <g transform="translate(340 78)">
+              <text x="0" y="0" fill="#0f766e" font-size="17" font-weight="800">2. Aggregate</text>
+              <text x="0" y="24" fill="#53606f" font-size="14">点特徴を重み付き平均で集約</text>
+              <g transform="translate(22 58)">
+                <rect x="0" y="0" width="30" height="120" fill="#e8f0f7" stroke="#d8dee6"/>
+                <rect x="44" y="0" width="30" height="120" fill="#d9f3ea" stroke="#d8dee6"/>
+                <rect x="88" y="0" width="30" height="120" fill="#fff1c9" stroke="#d8dee6"/>
+                <rect x="132" y="0" width="30" height="120" fill="#ece9ff" stroke="#d8dee6"/>
+                <circle cx="15" cy="24" r="8" fill="#0f766e"/><circle cx="59" cy="44" r="8" fill="#0f766e"/><circle cx="103" cy="34" r="8" fill="#0f766e"/><circle cx="147" cy="58" r="8" fill="#0f766e"/>
+                <circle cx="15" cy="84" r="8" fill="#0f766e" opacity="0.55"/><circle cx="59" cy="94" r="8" fill="#0f766e" opacity="0.55"/><circle cx="103" cy="82" r="8" fill="#0f766e" opacity="0.55"/><circle cx="147" cy="98" r="8" fill="#0f766e" opacity="0.55"/>
+              </g>
+              <text x="18" y="224" font-size="14" fill="#203047" font-weight="800">Z: (M, C)</text>
+            </g>
+
+            <path d="M526 184 L610 184" stroke="#203047" stroke-width="3" marker-end="url(#arrow2)"/>
+
+            <g transform="translate(636 78)">
+              <text x="0" y="0" fill="#6d5bd0" font-size="17" font-weight="800">3. Attend</text>
+              <text x="0" y="24" fill="#53606f" font-size="14">M個のtokenどうしだけAttention</text>
+              <g transform="translate(34 58)">
+                <circle cx="42" cy="42" r="24" fill="#ece9ff" stroke="#6d5bd0" stroke-width="3"/>
+                <circle cx="124" cy="42" r="24" fill="#ece9ff" stroke="#6d5bd0" stroke-width="3"/>
+                <circle cx="84" cy="112" r="24" fill="#ece9ff" stroke="#6d5bd0" stroke-width="3"/>
+                <line x1="42" y1="42" x2="124" y2="42" stroke="#6d5bd0" stroke-width="4"/>
+                <line x1="42" y1="42" x2="84" y2="112" stroke="#6d5bd0" stroke-width="4"/>
+                <line x1="124" y1="42" x2="84" y2="112" stroke="#6d5bd0" stroke-width="4"/>
+                <text x="34" y="48" fill="#203047" font-size="14" font-weight="800">t1</text>
+                <text x="116" y="48" fill="#203047" font-size="14" font-weight="800">t2</text>
+                <text x="76" y="118" fill="#203047" font-size="14" font-weight="800">t3</text>
+              </g>
+              <text x="28" y="224" font-size="14" fill="#203047" font-weight="800">Attention: (M, M)</text>
+            </g>
+
+            <path d="M810 184 L894 184" stroke="#203047" stroke-width="3" marker-end="url(#arrow2)"/>
+
+            <g transform="translate(914 78)">
+              <text x="0" y="0" fill="#4f9b5f" font-size="17" font-weight="800">4. Deslice</text>
+              <text x="0" y="24" fill="#53606f" font-size="14">更新tokenを各点へ戻す</text>
+              <g transform="translate(20 62)">
+                <circle cx="18" cy="26" r="7" fill="#4f9b5f"/><circle cx="50" cy="18" r="7" fill="#4f9b5f"/><circle cx="84" cy="33" r="7" fill="#4f9b5f"/>
+                <circle cx="30" cy="72" r="7" fill="#4f9b5f"/><circle cx="68" cy="82" r="7" fill="#4f9b5f"/><circle cx="102" cy="70" r="7" fill="#4f9b5f"/>
+                <path d="M8 112 C52 126, 96 126, 140 112" fill="none" stroke="#4f9b5f" stroke-width="4"/>
+              </g>
+              <g transform="translate(10 166)">
+                <rect x="0" y="0" width="128" height="54" rx="6" fill="#eef8f4" stroke="#9bc8ad"/>
+                <text x="12" y="23" font-size="14" fill="#203047" font-weight="800">X': (N, C)</text>
+                <text x="12" y="42" font-size="13" fill="#53606f">点ごとの更新値</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <div class="flow-grid">
+          <div class="flow-card">
+            <h3>Slice</h3>
+            <p>点特徴 <span class="accent">X</span> から、各点がどのsliceに属するかを表す重み <span class="accent">S</span> を作ります。分け方は固定ルールではなく、学習パラメータ <span class="accent">W_project</span> が決めます。</p>
+            <div class="formula">S = softmax(X W_project)</div>
+          </div>
+          <div class="flow-card">
+            <h3>Aggregate</h3>
+            <p>sliceごとに点特徴を重み付きで集め、少数のphysics token <span class="accent">Z</span> を作ります。各tokenは、そのsliceが代表する物理状態の要約です。</p>
+            <div class="formula">Z = normalize(S)^T X</div>
+          </div>
+          <div class="flow-card">
+            <h3>Token Attention</h3>
+            <p>全点Nではなく、代表token M個だけでAttentionします。ここが計算量削減の中心です。</p>
+            <div class="formula">A = softmax(QK^T / √d)</div>
+          </div>
+          <div class="flow-card">
+            <h3>Deslice</h3>
+            <p>更新されたtokenを、Sliceで使った重みによって各点へ戻します。点ごとに混合比が違うため、隣り合う点でも異なる更新値になります。</p>
+            <div class="formula">X' = S Z'</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="inner">
+      <h2>5. 実際の処理のshapeで追う</h2>
+      <p class="section-lead">2本目の資料では、N=1000点、M=8 slice、C=32特徴次元のtoy dataで、Physics-Attentionの中身をNumPy風に確認しています。Cは「点1個を表す数値ベクトルの長さ」です。重要なのは、重いAttentionが N×N から M×M へ置き換わることです。</p>
+      <table class="shape-table">
+        <thead>
+          <tr>
+            <th>段階</th>
+            <th>主な配列</th>
+            <th>shape</th>
+            <th>意味</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>入力</td>
+            <td><code>X</code></td>
+            <td><code>(N, C)</code></td>
+            <td>N個のメッシュ点それぞれがC次元の特徴量を持つ。</td>
+          </tr>
+          <tr>
+            <td>Slice</td>
+            <td><code>slice_weights</code></td>
+            <td><code>(N, M)</code></td>
+            <td><code>x @ W_project</code> をsoftmaxし、各点がM個のsliceへどれくらい属するかを出す。各行は合計1。</td>
+          </tr>
+          <tr>
+            <td>Aggregate</td>
+            <td><code>tokens</code></td>
+            <td><code>(M, C)</code></td>
+            <td><code>slice_weights.T @ x</code> で、N点の情報をM個のphysics tokenへ重み付き平均で集める。</td>
+          </tr>
+          <tr>
+            <td>Attention</td>
+            <td><code>attention</code></td>
+            <td><code>(M, M)</code></td>
+            <td>代表tokenどうしの相互作用を学習する。N×Nではない。</td>
+          </tr>
+          <tr>
+            <td>Deslice</td>
+            <td><code>X_updated</code></td>
+            <td><code>(N, C)</code></td>
+            <td><code>slice_weights @ z_prime</code> で、更新されたtoken情報を各点へ戻す。出力shapeは入力と同じ。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <strong>Full Transolver層では何が足されるか:</strong>
+        実際の層では、このPhysics-Attentionの前後にMLP、残差接続、LayerNorm、Feed Forward Networkが加わり、通常のTransformer blockのように複数層を積みます。
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="inner">
+      <h2>6. Physics-Attention Q&A: よくあるつまずき</h2>
+      <p class="section-lead">Q&Aで確認したポイントを、他の人が同じところで詰まらないように補強しました。ここでは <code>x</code> は各点の特徴ベクトル、<code>M</code> はslice数、<code>C</code> は特徴次元です。</p>
+      <div class="qa-grid">
+        <div class="qa-card">
+          <h3>Q1. Sliceはどうやって各点を分割するの？学習するの？</h3>
+          <p>分割の基準は <code>W_project</code> という学習パラメータが決めます。</p>
+          <div class="formula">slice_logits = x @ W_project<br>slice_weights = softmax(slice_logits, axis=1)</div>
+          <ul>
+            <li>固定ルールではなく、タスク全体の損失が小さくなるように <code>W_project</code> が自動学習されます。</li>
+            <li>単純な空間位置だけでなく、座標・法線・境界条件・圧力傾向などを含む特徴空間での類似度に基づいて分かれます。</li>
+            <li>学習後には「前縁高圧域」「後流領域」のような物理的に意味のある構造がsliceに対応する可能性があります。</li>
+          </ul>
+        </div>
+        <div class="qa-card">
+          <h3>Q2. Aggregateで「集める情報」とは何か？</h3>
+          <p>各点の特徴ベクトル <code>x</code> を、slice重みで加重平均して集めます。</p>
+          <div class="formula">tokens = slice_weights.T @ x</div>
+          <ul>
+            <li>slice <code>j</code> に強く属する点の特徴を重点的に集約したベクトル <code>z[j]</code> ができます。</li>
+            <li>結果として「このsliceが代表する物理状態の要約」になります。</li>
+            <li>何を基準にまとめるかは、<code>W_project</code> と前段のMLPが学習します。</li>
+          </ul>
+        </div>
+        <div class="qa-card">
+          <h3>Q3. Desliceで「各点に戻す」とは？</h3>
+          <p>Attention後の更新済みtokenを、各点のslice重みの比率でブレンドして受け取ります。</p>
+          <div class="formula">x_prime = slice_weights @ z_prime</div>
+          <ul>
+            <li>各点は、自分の <code>slice_weights</code> に応じて複数tokenの情報を混ぜて受け取ります。</li>
+            <li>slice重みは点ごとに異なるため、隣り合った点でも異なる混合比になります。</li>
+            <li>この「重みつきで戻す」処理が、空間的に連続した予測値の変化を生みます。</li>
+          </ul>
+        </div>
+        <div class="qa-card">
+          <h3>Q4. SVMやK近傍法、K-meansと何が違う？</h3>
+          <p>特徴空間の類似度を使う点は似ています。ただしTransolverの目的は分類や近傍探索ではなく、代表token間の相互作用を学習することです。</p>
+          <ul>
+            <li><strong>ソフト割り当て:</strong> KNNやK-meansは1点を1グループに完全帰属させがちですが、Transolverは1点が全sliceへ確率的に属します。</li>
+            <li><strong>境界領域に強い:</strong> 境界付近の点を複数sliceにまたがって扱えます。</li>
+            <li><strong>Attentionはグループ間:</strong> グループ内を細かく分析するのではなく、「前縁sliceと後流sliceがどう関係するか」をtokenレベルで捉えます。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note-box">
+        <h3>全体の流れを一言で</h3>
+        <div class="simple-flow">
+          <div class="simple-flow-item">各点をゆるく割り当てる</div>
+          <div class="simple-flow-item">代表token間の相互作用を学習する</div>
+          <div class="simple-flow-item">重みに応じて各点へ再配分する</div>
+        </div>
+        <table class="shape-table">
+          <thead>
+            <tr>
+              <th>ステップ</th>
+              <th>処理</th>
+              <th>shape変化</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Slice</td>
+              <td><code>x @ W_project → softmax</code></td>
+              <td><code>(N,C) → (N,M)</code></td>
+            </tr>
+            <tr>
+              <td>Aggregate</td>
+              <td><code>slice_weights.T @ x</code></td>
+              <td><code>(N,M)×(N,C) → (M,C)</code></td>
+            </tr>
+            <tr>
+              <td>Attend</td>
+              <td>token間のAttention</td>
+              <td><code>(M,C) → (M,C)</code></td>
+            </tr>
+            <tr>
+              <td>Deslice</td>
+              <td><code>slice_weights @ z_prime</code></td>
+              <td><code>(N,M)×(M,C) → (N,C)</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="inner">
+      <h2>7. 計算量の差を体感する</h2>
+      <p class="section-lead">標準Attentionはおおまかに <code>N²</code>、Transolver風のPhysics-Attentionは <code>2NM + M²</code> です。MをNより十分小さく保つほど差が大きくなります。</p>
+      <div class="complexity">
+        <div class="panel soft">
+          <div class="control">
+            <label for="nRange">点数 N</label>
+            <input id="nRange" type="range" min="10000" max="400000" step="10000" value="400000">
+            <div class="value-pair"><span>10,000</span><strong id="nValue">400,000</strong><span>400,000</span></div>
+          </div>
+          <div class="control" style="margin-top: 18px">
+            <label for="mRange">slice / token数 M</label>
+            <input id="mRange" type="range" min="16" max="256" step="16" value="64">
+            <div class="value-pair"><span>16</span><strong id="mValue">64</strong><span>256</span></div>
+          </div>
+          <div class="formula" id="complexityFormula">standard = N² / transolver = 2NM + M²</div>
+        </div>
+        <div class="panel">
+          <div class="bar-chart">
+            <div class="chart-row">
+              <strong>標準Attention</strong>
+              <div class="track"><div class="fill standard"></div></div>
+              <span id="standardValue">160.0B</span>
+            </div>
+            <div class="chart-row">
+              <strong>Transolver風</strong>
+              <div class="track"><div id="transolverFill" class="fill transolver"></div></div>
+              <span id="transolverValue">51.2M</span>
+            </div>
+          </div>
+          <div class="callout">
+            <strong id="ratioValue">約3,125倍小さい</strong>
+            <p class="small">資料中の例と同じく、N=400,000、M=64では、標準Attentionの160.0Bに対してTransolver風は約51.2Mです。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="inner">
+      <h2>8. 初学者向けの読み替え</h2>
+      <p class="section-lead">式だけを見ると難しく見えますが、処理の意味は「全部を直接比べるのをやめ、代表を介して必要な相互作用を運ぶ」ことです。</p>
+      <div class="grid-3">
+        <div class="panel soft">
+          <h3>Transformer</h3>
+          <p>各tokenが他の全tokenを見ます。文章では、離れた単語の関係も文脈として効くため強力です。</p>
+        </div>
+        <div class="panel soft">
+          <h3>物理メッシュでの困りごと</h3>
+          <p>点が多すぎます。しかも、重要な関係は単純な文順ではなく、近傍、境界、流れの構造に現れます。</p>
+        </div>
+        <div class="panel soft">
+          <h3>Transolver</h3>
+          <p>点を少数の物理tokenへゆるく集約し、そのtoken間でAttentionします。結果を各点へ戻すので、点ごとの予測に使えます。</p>
+        </div>
+      </div>
+      <div class="glossary" style="margin-top: 18px">
+        <div class="term">
+          <strong>Attention</strong>
+          <span>どの情報をどれくらい参照するかを重みで決める仕組み。</span>
+        </div>
+        <div class="term">
+          <strong>Token</strong>
+          <span>Transformerが処理する単位。物理ではメッシュ点や代表状態にも対応する。</span>
+        </div>
+        <div class="term">
+          <strong>Soft assignment</strong>
+          <span>1点を1グループへ固定せず、複数グループへの所属度として扱うこと。ここでは「ゆるい所属」と考える。</span>
+        </div>
+        <div class="term">
+          <strong>Bottleneck</strong>
+          <span>情報を一度小さい表現へ圧縮する箇所。計算量を下げる一方、必要情報を残す設計が重要。</span>
+        </div>
+        <div class="term">
+          <strong>Slice</strong>
+          <span>点を一時的にまとめる先。空間を固定的に切る箱ではなく、特徴に応じて学習される所属先。</span>
+        </div>
+        <div class="term">
+          <strong>W_project</strong>
+          <span>各点をどのsliceへどれくらい割り当てるかを決める学習行列。</span>
+        </div>
+        <div class="term">
+          <strong>Physics token</strong>
+          <span>sliceに集めた点情報の代表ベクトル。前縁、後流、境界付近などの物理状態を要約しうる。</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="inner">
+      <p>このHTMLは、提供された2つの学習用PDFの補助として、TransformerのSelf-Attention、物理メッシュ適用時のボトルネック、Transolver / Physics-Attentionの処理フローを図解したものです。</p>
+    </div>
+  </footer>
+
+  <script>
+    const nRange = document.getElementById("nRange");
+    const mRange = document.getElementById("mRange");
+    const nValue = document.getElementById("nValue");
+    const mValue = document.getElementById("mValue");
+    const standardValue = document.getElementById("standardValue");
+    const transolverValue = document.getElementById("transolverValue");
+    const transolverFill = document.getElementById("transolverFill");
+    const ratioValue = document.getElementById("ratioValue");
+    const complexityFormula = document.getElementById("complexityFormula");
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat("ja-JP").format(Math.round(value));
+    }
+
+    function compact(value) {
+      if (value >= 1e12) return (value / 1e12).toFixed(2) + "T";
+      if (value >= 1e9) return (value / 1e9).toFixed(1) + "B";
+      if (value >= 1e6) return (value / 1e6).toFixed(1) + "M";
+      if (value >= 1e3) return (value / 1e3).toFixed(1) + "K";
+      return String(Math.round(value));
+    }
+
+    function updateComplexity() {
+      const n = Number(nRange.value);
+      const m = Number(mRange.value);
+      const standard = n * n;
+      const transolver = 2 * n * m + m * m;
+      const ratio = standard / transolver;
+      const fill = Math.max(0.4, Math.min(100, (transolver / standard) * 100));
+
+      nValue.textContent = formatNumber(n);
+      mValue.textContent = formatNumber(m);
+      standardValue.textContent = compact(standard);
+      transolverValue.textContent = compact(transolver);
+      transolverFill.style.width = fill + "%";
+      ratioValue.textContent = "約" + formatNumber(ratio) + "倍小さい";
+      complexityFormula.textContent = "N=" + formatNumber(n) + ", M=" + formatNumber(m) + " → N²=" + compact(standard) + " / 2NM+M²=" + compact(transolver);
+    }
+
+    nRange.addEventListener("input", updateComplexity);
+    mRange.addEventListener("input", updateComplexity);
+    updateComplexity();
+  </script>
+</body>
+</html>
