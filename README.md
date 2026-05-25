@@ -1,16 +1,21 @@
 # PhysicsNeMo Study
 
-NVIDIA PhysicsNeMo の学習会・勉強会向け資料を管理するリポジトリです。
+NVIDIA PhysicsNeMo と周辺の Physics AI 技術を学ぶための、有志勉強会向け資料を管理するリポジトリです。
 
-現時点では Transolver 関連の資料を中心に準備しています。将来的に公開リポジトリとして参加者向けに共有する想定です。
+現時点では Transolver / Physics-Attention の日本語教材を中心に準備しています。将来的に公開リポジトリとして、勉強会参加者が事前学習・復習に使える形で整備する想定です。
+
+このリポジトリは NVIDIA 公式資料ではありません。公開資料、論文、公式サンプル、実験結果をもとにした学習補助資料です。
 
 ## Contents
 
-- `01_transformer_bottleneck_ja_handout.pdf`
-- `02_physics_attention_transolver_ja_handout.pdf`
-- `03_training_transolver_shiftwing_caseb_ja_full200_executed_handout.pdf`
-- `transformer_transolver_flow_infographic.html`
+- [Transolver](Transolver/): Transformer の計算量ボトルネック、Transolver の Physics-Attention、Shift-WING での学習例を扱う教材です。
+
+## Recommended Entry Point
+
+Transolver 教材を読む場合は、まず [Transolver/README.md](Transolver/README.md) を参照してください。
+
+HTML は概要説明資料、PDF は Notebook 実行結果を保存した補助資料です。Notebook を実行しなくても流れが追えるように、実行済み出力を PDF として同梱しています。
 
 ## Status
 
-Work in progress.
+Work in progress. 資料構成、実行環境、配布用データの扱いは今後も更新します。
