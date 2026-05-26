@@ -4,6 +4,8 @@ Transolver / Physics-Attention を日本語で学ぶための教材です。
 
 HTML は概要説明資料です。PDF は Notebook を実行した結果を保存したもので、Notebook を手元で実行しなくても内容と結果を確認できる補助資料です。
 
+![Transolver flow overview](Transolver_Flow.png)
+
 ## Source Material
 
 本資料のオリジナルは、NVIDIA/OpenHackathons の End-to-End AI for Science 教材内にある Transolver Notebook です。
@@ -16,6 +18,7 @@ HTML は概要説明資料です。PDF は Notebook を実行した結果を保�
 
 | Path | Role |
 |---|---|
+| [Transolver_Flow.png](Transolver_Flow.png) | Transolver の処理フローを俯瞰する概要図 |
 | [transformer_transolver_flow_infographic.html](transformer_transolver_flow_infographic.html) | Transformer と Transolver の処理フローを図解する概要資料 |
 | [Transolver_Architecture.pdf](Transolver_Architecture.pdf) | Transolver の構造を説明する補助資料 |
 | [01_transformer_bottleneck_ja_handout.pdf](01_transformer_bottleneck_ja_handout.pdf) | Notebook 1 の実行済みPDF。Self-Attention と `O(N^2)` ボトルネックを確認 |
