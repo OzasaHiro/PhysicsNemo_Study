@@ -26,6 +26,10 @@ Transolver の `Slice -> Aggregate -> Attend -> Deslice` を維持し、Attend �
 
 ![GeoTransolver shared context](GeoTransolver_Difference_03_Shared_Context.png)
 
+## GeoPT Comparison Experiment
+
+[GeoPT / GeoTransolver 性能比較資料](GeoPT_Comparison/README.md)では、SHIFT-Wing の簡易検証により、GeoPT 事前学習済み Transolver、Scratch 学習の Transolver、Scratch 学習の GeoTransolver を比較しています。プレゼン資料と詳細レポート（PDF）を収録しています。
+
 ## Files
 
 | Path | Role |
@@ -34,6 +38,7 @@ Transolver の `Slice -> Aggregate -> Attend -> Deslice` を維持し、Attend �
 | [GeoTransolver_Difference_01_Local_Augmentation.png](GeoTransolver_Difference_01_Local_Augmentation.png) | 入力点へ付与するマルチスケール局所幾何特徴 `u_i` |
 | [GeoTransolver_Difference_02_GALE.png](GeoTransolver_Difference_02_GALE.png) | GALE 内の Slice / Aggregate / Attend / Cross-Attention / 学習ゲート / Deslice |
 | [GeoTransolver_Difference_03_Shared_Context.png](GeoTransolver_Difference_03_Shared_Context.png) | 共有context `C_ctx` の構築と全層での再利用 |
+| [GeoPT_Comparison/](GeoPT_Comparison/) | GeoPT と GeoTransolver の性能比較プレゼン・実験レポート |
 | `*.svg` | 上記 PNG の編集可能な原稿 |
 
 ## Terminology
