@@ -1,0 +1,201 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" role="img" aria-labelledby="title desc">
+  <title id="title">GeoTransolverでのデータ処理フロー</title>
+  <desc id="desc">Transolver教材の用語に合わせ、MLP埋め込み、Slice、Aggregate、Attend、DesliceにGeoTransolverの局所幾何特徴、Cross-Attention、共有contextを加えた処理フロー。</desc>
+  <defs>
+    <style>
+      text { font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif; fill: #102a43; letter-spacing: 0; }
+      .title { font-size: 42px; font-weight: 700; }
+      .subtitle { font-size: 21px; fill: #486581; }
+      .section { font-size: 22px; font-weight: 700; }
+      .label { font-size: 18px; font-weight: 700; }
+      .body { font-size: 16px; }
+      .small { font-size: 13px; fill: #486581; }
+      .tiny { font-size: 12px; fill: #627d98; }
+      .base { fill: #ffffff; stroke: #1f67b3; stroke-width: 2.2; rx: 8; }
+      .geo { fill: #fff7ed; stroke: #e87924; stroke-width: 2.4; rx: 8; }
+      .context { fill: #ecfdf5; stroke: #159974; stroke-width: 2.4; rx: 8; }
+      .soft { fill: #f3f8fd; stroke: #9fbdd9; stroke-width: 1.5; rx: 6; }
+      .arrow-blue { stroke: #1f67b3; stroke-width: 3; fill: none; marker-end: url(#arrowBlue); }
+      .arrow-orange { stroke: #e87924; stroke-width: 3; fill: none; marker-end: url(#arrowOrange); }
+      .arrow-green { stroke: #159974; stroke-width: 3; fill: none; marker-end: url(#arrowGreen); }
+      .bus { stroke: #159974; stroke-width: 4; fill: none; }
+    </style>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1f67b3"/></marker>
+    <marker id="arrowOrange" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e87924"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#159974"/></marker>
+  </defs>
+
+  <rect width="1600" height="1100" fill="#f8fbfe"/>
+  <rect x="0" y="0" width="1600" height="120" fill="#ffffff"/>
+  <text x="54" y="56" class="title">GeoTransolverでのデータ処理フロー</text>
+  <text x="56" y="92" class="subtitle">TransolverのPhysics-Attentionに、局所幾何特徴と全層共有contextを追加</text>
+  <line x1="54" y1="114" x2="1546" y2="114" stroke="#d9e2ec" stroke-width="2"/>
+
+  <g transform="translate(1052,81)">
+    <rect x="0" y="-15" width="14" height="14" fill="#ffffff" stroke="#1f67b3" stroke-width="2"/><text x="22" y="-3" class="tiny">Transolverから継承</text>
+    <rect x="178" y="-15" width="14" height="14" fill="#fff7ed" stroke="#e87924" stroke-width="2"/><text x="200" y="-3" class="tiny">GeoTransolverで追加</text>
+    <rect x="378" y="-15" width="14" height="14" fill="#ecfdf5" stroke="#159974" stroke-width="2"/><text x="400" y="-3" class="tiny">全層で共有</text>
+  </g>
+
+  <!-- Input -->
+  <rect class="base" x="38" y="170" width="206" height="420"/>
+  <circle cx="70" cy="204" r="20" fill="#0f4f9c"/><text x="64" y="211" class="label" style="fill:#ffffff">1</text>
+  <text x="101" y="211" class="section">生の入力</text>
+  <text x="62" y="252" class="label">クエリ点群 X</text>
+  <text x="62" y="279" class="small">座標 x_i / 点特徴 f_i</text>
+  <g fill="#1f67b3"><circle cx="78" cy="320" r="6"/><circle cx="108" cy="304" r="5"/><circle cx="129" cy="332" r="6"/><circle cx="165" cy="312" r="5"/><circle cx="191" cy="344" r="6"/><circle cx="103" cy="356" r="4"/><circle cx="151" cy="369" r="5"/></g>
+  <line x1="62" y1="390" x2="220" y2="390" stroke="#d9e2ec"/>
+  <text x="62" y="423" class="label">形状点群 G</text>
+  <text x="62" y="449" class="small">表面メッシュ / 境界形状</text>
+  <path d="M65 503 C103 458, 147 518, 211 467" fill="none" stroke="#e87924" stroke-width="4"/>
+  <g fill="#e87924"><circle cx="77" cy="490" r="5"/><circle cx="113" cy="478" r="5"/><circle cx="151" cy="498" r="5"/><circle cx="187" cy="486" r="5"/><circle cx="209" cy="468" r="5"/></g>
+  <text x="62" y="546" class="label">グローバル条件 p</text>
+  <text x="62" y="572" class="small">Mach / 迎角 / Reynolds数など</text>
+
+  <!-- Embedding and local feature -->
+  <rect class="geo" x="278" y="170" width="205" height="150"/>
+  <circle cx="310" cy="204" r="20" fill="#e87924"/><text x="304" y="211" class="label" style="fill:#ffffff">2a</text>
+  <text x="342" y="207" class="label">局所幾何特徴</text>
+  <text x="300" y="242" class="body">multi-scale Ball Query</text>
+  <text x="300" y="270" class="body">G → X</text>
+  <text x="300" y="298" class="small">各点の局所特徴 u_i を生成</text>
+  <path class="arrow-orange" d="M244 418 C264 418, 264 250, 270 250"/>
+  <path class="arrow-orange" d="M244 275 C260 275, 260 225, 270 225"/>
+
+  <rect class="base" x="278" y="374" width="205" height="150"/>
+  <circle cx="310" cy="408" r="20" fill="#0f4f9c"/><text x="304" y="415" class="label" style="fill:#ffffff">2</text>
+  <text x="342" y="412" class="section">MLP埋め込み</text>
+  <text x="300" y="451" class="body">f_i → x_i</text>
+  <text x="300" y="480" class="small">x：学習済み潜在表現</text>
+  <text x="300" y="507" class="small">既存Transolverと同じ表記</text>
+  <path class="arrow-blue" d="M244 300 C266 300, 260 448, 270 448"/>
+
+  <rect class="geo" x="508" y="301" width="86" height="154"/>
+  <text x="551" y="333" class="label" text-anchor="middle">結合</text>
+  <text x="551" y="372" class="body" text-anchor="middle">[x_i,</text>
+  <text x="551" y="398" class="body" text-anchor="middle">u_i]</text>
+  <text x="551" y="430" class="small" text-anchor="middle">最初の</text>
+  <text x="551" y="449" class="small" text-anchor="middle">GALE前</text>
+  <path class="arrow-orange" d="M483 245 C520 245, 520 293, 543 293"/>
+  <path class="arrow-blue" d="M483 448 C520 448, 520 463, 543 463 L543 463 L543 463"/>
+
+  <!-- GALE / Physics Attention -->
+  <rect x="618" y="152" width="770" height="455" rx="10" fill="#ffffff" stroke="#1f67b3" stroke-width="2.5"/>
+  <rect x="636" y="136" width="386" height="36" rx="8" fill="#f8fbfe"/>
+  <text x="652" y="161" class="section">GALE block × L（Physics-Attention拡張）</text>
+  <path class="arrow-blue" d="M594 378 L624 378"/>
+
+  <rect class="base" x="642" y="215" width="112" height="294"/>
+  <circle cx="670" cy="244" r="18" fill="#0f4f9c"/><text x="665" y="250" class="label" style="fill:#ffffff">3</text>
+  <text x="697" y="250" class="label">Slice</text>
+  <text x="656" y="284" class="small">ソフト割り当て</text>
+  <text x="656" y="314" class="small">点特徴 x</text>
+  <text x="656" y="337" class="small">↓</text>
+  <text x="656" y="360" class="small">slice_weights</text>
+  <text x="656" y="383" class="small">shape: (N,M)</text>
+  <g fill="none" stroke="#1f67b3" stroke-width="1.5"><path d="M659 420 L724 400"/><path d="M659 440 L724 430"/><path d="M659 460 L724 470"/></g>
+  <g fill="#9fbdd9"><circle cx="659" cy="420" r="5"/><circle cx="659" cy="440" r="5"/><circle cx="659" cy="460" r="5"/></g>
+  <g fill="#ffffff" stroke="#1f67b3" stroke-width="2"><rect x="719" y="394" width="12" height="12"/><rect x="719" y="424" width="12" height="12"/><rect x="719" y="464" width="12" height="12"/></g>
+  <text x="656" y="493" class="small">M個へ確率的に割当</text>
+
+  <rect class="base" x="770" y="215" width="120" height="294"/>
+  <circle cx="798" cy="244" r="18" fill="#0f4f9c"/><text x="793" y="250" class="label" style="fill:#ffffff">4</text>
+  <text x="784" y="282" class="label">Aggregate</text>
+  <text x="784" y="312" class="small">slice_weightsで</text>
+  <text x="784" y="334" class="small">加重平均</text>
+  <text x="784" y="366" class="small">N点の特徴</text>
+  <text x="784" y="388" class="small">↓</text>
+  <text x="784" y="410" class="small">M個の</text>
+  <text x="784" y="432" class="small">physics token z</text>
+  <g fill="#f0a43c"><circle cx="812" cy="445" r="9"/><circle cx="840" cy="445" r="9"/><circle cx="868" cy="445" r="9"/></g>
+  <text x="784" y="486" class="small">shape: (M,C)</text>
+
+  <rect class="base" x="906" y="215" width="112" height="294"/>
+  <circle cx="934" cy="244" r="18" fill="#0f4f9c"/><text x="929" y="250" class="label" style="fill:#ffffff">5</text>
+  <text x="920" y="282" class="label">Attend</text>
+  <text x="920" y="312" class="small">token間で</text>
+  <text x="920" y="334" class="small">Attention</text>
+  <text x="920" y="366" class="small">計算対象</text>
+  <text x="920" y="389" class="body">M × M</text>
+  <g fill="#1f67b3" opacity="0.8"><rect x="923" y="394" width="18" height="18"/><rect x="945" y="394" width="18" height="18" opacity="0.35"/><rect x="967" y="394" width="18" height="18" opacity="0.55"/><rect x="923" y="416" width="18" height="18" opacity="0.3"/><rect x="945" y="416" width="18" height="18" opacity="0.9"/><rect x="967" y="416" width="18" height="18" opacity="0.4"/><rect x="923" y="438" width="18" height="18" opacity="0.55"/><rect x="945" y="438" width="18" height="18" opacity="0.25"/><rect x="967" y="438" width="18" height="18" opacity="0.85"/></g>
+  <text x="920" y="486" class="small">更新token z_attn</text>
+
+  <rect class="geo" x="1034" y="215" width="142" height="294"/>
+  <text x="1050" y="246" class="label">Cross-</text>
+  <text x="1050" y="269" class="label">Attention</text>
+  <text x="1050" y="302" class="small">Q：更新済み</text>
+  <text x="1050" y="324" class="small">physics token</text>
+  <text x="1050" y="354" class="small">K, V：共有context</text>
+  <text x="1050" y="376" class="small">C_ctx</text>
+  <line x1="1050" y1="390" x2="1160" y2="390" stroke="#f0a36a"/>
+  <text x="1050" y="422" class="small">全層で形状・条件を</text>
+  <text x="1050" y="444" class="small">直接読み戻す</text>
+  <text x="1050" y="486" class="small">context側token z_ctx</text>
+
+  <rect class="geo" x="1192" y="215" width="92" height="294"/>
+  <text x="1208" y="250" class="label">学習</text>
+  <text x="1208" y="272" class="label">ゲート</text>
+  <text x="1207" y="316" class="small">α_l =</text>
+  <text x="1207" y="338" class="small">σ(η_l)</text>
+  <text x="1207" y="378" class="small">z_mix =</text>
+  <text x="1207" y="400" class="small">(1−α_l)</text>
+  <text x="1207" y="422" class="small">z_attn</text>
+  <text x="1207" y="444" class="small">+ α_l z_ctx</text>
+  <text x="1207" y="486" class="small">層ごとに学習</text>
+
+  <rect class="base" x="1300" y="215" width="72" height="294"/>
+  <text x="1311" y="246" class="label">6</text>
+  <text x="1311" y="271" class="label">De-</text>
+  <text x="1311" y="294" class="label">slice</text>
+  <text x="1311" y="316" class="small">更新済み</text>
+  <text x="1311" y="338" class="small">tokenを</text>
+  <text x="1311" y="360" class="small">各点へ</text>
+  <text x="1311" y="382" class="small">再配分</text>
+  <g fill="#9fbdd9"><circle cx="1321" cy="426" r="5"/><circle cx="1337" cy="426" r="5"/><circle cx="1353" cy="426" r="5"/><circle cx="1321" cy="450" r="5"/><circle cx="1337" cy="450" r="5"/><circle cx="1353" cy="450" r="5"/></g>
+  <text x="1311" y="486" class="small">点特徴 x'</text>
+
+  <path class="arrow-blue" d="M754 362 L762 362"/><path class="arrow-blue" d="M890 362 L898 362"/><path class="arrow-blue" d="M1018 362 L1026 362"/><path class="arrow-orange" d="M1176 362 L1184 362"/><path class="arrow-orange" d="M1284 362 L1292 362"/>
+
+  <!-- Output -->
+  <rect class="base" x="1418" y="275" width="144" height="230"/>
+  <circle cx="1447" cy="310" r="20" fill="#0f4f9c"/><text x="1441" y="317" class="label" style="fill:#ffffff">7</text>
+  <text x="1478" y="317" class="section">出力</text>
+  <text x="1440" y="355" class="body">各点の予測値</text>
+  <text x="1440" y="385" class="small">圧力 / 速度 /</text>
+  <text x="1440" y="407" class="small">応力など</text>
+  <g fill="#1f67b3"><circle cx="1448" cy="448" r="6"/><circle cx="1470" cy="436" r="6"/><circle cx="1492" cy="455" r="6"/><circle cx="1515" cy="438" r="6"/><circle cx="1537" cy="460" r="6"/></g>
+  <path class="arrow-blue" d="M1388 378 L1410 378"/>
+
+  <!-- Shared context builder -->
+  <rect class="context" x="318" y="662" width="1048" height="232"/>
+  <text x="346" y="698" class="section">共有context C_ctx を1回構築（論文表記 C）</text>
+  <text x="946" y="698" class="small">Context Projector = Slice → Aggregate（Desliceしない）</text>
+  <rect class="soft" x="346" y="724" width="250" height="72"/>
+  <text x="366" y="751" class="label">形状点群 G</text><text x="366" y="774" class="small">T_geo → Z_geo</text><text x="468" y="774" class="tiny">context physics token</text>
+  <rect class="soft" x="616" y="724" width="250" height="72"/>
+  <text x="636" y="751" class="label">グローバル条件 p</text><text x="636" y="774" class="small">T_glob → Z_glob</text><text x="754" y="774" class="tiny">context physics token</text>
+  <rect class="geo" x="886" y="724" width="450" height="72"/>
+  <text x="906" y="751" class="label">X → G multi-scale Ball Query</text><text x="906" y="774" class="small">T_s → Z_1 … Z_Ns</text><text x="1055" y="774" class="tiny">context physics token</text>
+  <rect x="500" y="822" width="680" height="48" rx="8" fill="#159974"/>
+  <text x="840" y="853" class="body" text-anchor="middle" style="fill:#ffffff">C_ctx = [Z_geo, Z_glob, Z_1 … Z_Ns]（論文表記 C）</text>
+  <path class="arrow-green" d="M471 796 C471 814, 610 814, 650 822"/><path class="arrow-green" d="M741 796 L741 814"/><path class="arrow-green" d="M1111 796 C1111 814, 1030 814, 1000 822"/>
+  <path class="bus" d="M1146 846 L1400 846 L1400 190 L1105 190"/>
+  <path class="arrow-green" d="M1105 190 L1105 207"/>
+  <text x="650" y="888" class="small" style="fill:#0f7b5e">同じC_ctxを全GALE blockのCross-Attentionへ供給</text>
+  <path class="arrow-green" d="M140 590 C140 630, 415 630, 415 654"/><path class="arrow-green" d="M200 590 C200 640, 741 640, 741 654"/><path class="arrow-green" d="M235 548 C255 620, 1060 620, 1060 654"/>
+
+  <!-- Summary -->
+  <rect x="54" y="932" width="1492" height="108" rx="8" fill="#102a43"/>
+  <text x="82" y="967" class="label" style="fill:#ffffff">用語をTransolver資料と統一</text>
+  <line x1="380" y1="950" x2="380" y2="1020" stroke="#486581" stroke-width="2"/>
+  <line x1="884" y1="950" x2="884" y2="1020" stroke="#486581" stroke-width="2"/>
+  <text x="412" y="965" class="label" style="fill:#ffffff">Transolverから継承</text>
+  <text x="412" y="990" class="small" style="fill:#d9e2ec">MLP埋め込み → Slice → Aggregate → Attend → Deslice</text>
+  <text x="412" y="1014" class="small" style="fill:#d9e2ec">N点をM個のphysics tokenへ集約し、各点へ戻す</text>
+  <text x="916" y="965" class="label" style="fill:#ffffff">GeoTransolverで追加</text>
+  <text x="916" y="990" class="small" style="fill:#d9e2ec">局所特徴 u_i + Cross-Attention + 学習ゲート</text>
+  <text x="916" y="1014" class="small" style="fill:#d9e2ec">共有context C_ctxで形状・運転条件を全層から参照</text>
+
+  <text x="54" y="1077" class="tiny">Source: GeoTransolver, Adams et al., arXiv:2512.20399 (v3) / NVIDIA PhysicsNeMo documentation</text>
+  <text x="1546" y="1077" class="tiny" text-anchor="end">PhysicsNeMo Study · Transolver / GeoTransolver</text>
+</svg>

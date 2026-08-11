@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">変更2：共有contextを読むGALEブロック</title>
+  <desc id="desc">Transolver教材のSlice、Aggregate、Attend、Desliceという用語を使い、Attend後のphysics tokenが共有contextへCross-Attentionし、学習ゲートで混合されるGALEブロックを説明する図。</desc>
+  <defs>
+    <style>
+      text { font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif; fill: #102a43; letter-spacing: 0; }
+      .title { font-size: 40px; font-weight: 700; }
+      .subtitle { font-size: 21px; fill: #486581; }
+      .section { font-size: 22px; font-weight: 700; }
+      .label { font-size: 18px; font-weight: 700; }
+      .body { font-size: 16px; }
+      .small { font-size: 13px; fill: #486581; }
+      .tiny { font-size: 12px; fill: #627d98; }
+      .base { fill: #ffffff; stroke: #1f67b3; stroke-width: 2.2; rx: 8; }
+      .geo { fill: #fff7ed; stroke: #e87924; stroke-width: 2.4; rx: 8; }
+      .context { fill: #ecfdf5; stroke: #159974; stroke-width: 2.4; rx: 8; }
+      .arrow-blue { stroke: #1f67b3; stroke-width: 3; fill: none; marker-end: url(#arrowBlue); }
+      .arrow-orange { stroke: #e87924; stroke-width: 3; fill: none; marker-end: url(#arrowOrange); }
+      .arrow-green { stroke: #159974; stroke-width: 3; fill: none; marker-end: url(#arrowGreen); }
+    </style>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1f67b3"/></marker>
+    <marker id="arrowOrange" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e87924"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#159974"/></marker>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#f8fbfe"/>
+  <rect x="0" y="0" width="1600" height="122" fill="#ffffff"/>
+  <text x="54" y="56" class="title">変更</text>
+  <text x="142" y="56" class="title">2｜共有文脈を読むGALEブロック</text>
+  <text x="56" y="92" class="subtitle">Physics-Attentionの4工程を維持し、Attend後にCross-Attentionと学習ゲートを追加</text>
+  <line x1="54" y1="116" x2="1546" y2="116" stroke="#d9e2ec" stroke-width="2"/>
+
+  <rect x="56" y="143" width="1488" height="76" rx="8" fill="#ffffff" stroke="#d9e2ec" stroke-width="2"/>
+  <text x="80" y="174" class="label">既存資料と同じ用語</text>
+  <text x="80" y="202" class="small">点群特徴 x → Slice → Aggregate → Attend → Deslice → 更新後の点群特徴 x'</text>
+  <rect x="618" y="160" width="14" height="14" fill="#ffffff" stroke="#1f67b3" stroke-width="2"/><text x="642" y="173" class="small">Transolverから継承</text>
+  <rect x="816" y="160" width="14" height="14" fill="#fff7ed" stroke="#e87924" stroke-width="2"/><text x="840" y="173" class="small">GALEで追加</text>
+  <rect x="970" y="160" width="14" height="14" fill="#ecfdf5" stroke="#159974" stroke-width="2"/><text x="994" y="173" class="small">共有context C_ctx（論文表記 C）</text>
+
+  <text x="56" y="267" class="section">1つのGALE blockの内部</text>
+
+  <!-- Shared context -->
+  <rect class="context" x="846" y="238" width="250" height="90"/>
+  <text x="870" y="270" class="label">共有context C_ctx</text>
+  <text x="870" y="286" class="small">形状・運転条件の</text>
+  <text x="870" y="305" class="small">context physics token</text>
+  <text x="870" y="324" class="small">同じC_ctxを全blockで再利用</text>
+
+  <!-- Main GALE pipeline -->
+  <rect class="base" x="48" y="358" width="162" height="204"/>
+  <text x="72" y="393" class="label">点群特徴 x</text>
+  <text x="72" y="421" class="body">shape: (N, C)</text>
+  <text x="72" y="451" class="small">MLP埋め込み後の</text>
+  <text x="72" y="473" class="small">学習済み潜在表現</text>
+  <g fill="#1f67b3"><circle cx="82" cy="515" r="6"/><circle cx="107" cy="500" r="6"/><circle cx="132" cy="522" r="6"/><circle cx="157" cy="505" r="6"/><circle cx="182" cy="525" r="6"/></g>
+
+  <rect class="base" x="242" y="358" width="170" height="204"/>
+  <text x="264" y="393" class="label">3 Slice</text>
+  <text x="264" y="421" class="body">ソフト割り当て</text>
+  <text x="264" y="451" class="small">各点をM個のsliceへ</text>
+  <text x="264" y="473" class="small">確率的に割り当てる</text>
+  <text x="264" y="507" class="small">slice_weights</text>
+  <text x="264" y="531" class="small">shape: (N, M)</text>
+
+  <rect class="base" x="444" y="358" width="180" height="204"/>
+  <text x="466" y="393" class="label">4 Aggregate</text>
+  <text x="466" y="421" class="body">重み付き平均</text>
+  <text x="466" y="451" class="small">slice_weightsで</text>
+  <text x="466" y="473" class="small">N点の特徴を集約</text>
+  <text x="466" y="507" class="small">M個のphysics token z</text>
+  <text x="466" y="531" class="small">shape: (M, C)</text>
+
+  <rect class="base" x="656" y="358" width="174" height="204"/>
+  <text x="678" y="393" class="label">5 Attend</text>
+  <text x="678" y="421" class="body">token間でAttention</text>
+  <text x="678" y="451" class="small">計算対象：M × M</text>
+  <g fill="#1f67b3" opacity="0.8"><rect x="682" y="480" width="20" height="20"/><rect x="706" y="480" width="20" height="20" opacity="0.35"/><rect x="730" y="480" width="20" height="20" opacity="0.55"/><rect x="754" y="480" width="20" height="20" opacity="0.8"/><rect x="682" y="504" width="20" height="20" opacity="0.3"/><rect x="706" y="504" width="20" height="20" opacity="0.9"/><rect x="730" y="504" width="20" height="20" opacity="0.4"/><rect x="754" y="504" width="20" height="20" opacity="0.6"/></g>
+  <text x="678" y="547" class="small">更新token z_attn</text>
+
+  <rect class="geo" x="862" y="358" width="208" height="204"/>
+  <text x="884" y="393" class="label">Cross-Attention</text>
+  <text x="884" y="427" class="body">Q：z_attn</text>
+  <text x="884" y="455" class="body">K, V：C_ctx</text>
+  <line x1="884" y1="474" x2="1046" y2="474" stroke="#f0a36a"/>
+  <text x="884" y="505" class="small">形状・運転条件を</text>
+  <text x="884" y="527" class="small">各層で直接参照</text>
+  <text x="884" y="551" class="small">context出力 z_ctx</text>
+  <path class="arrow-green" d="M971 328 L971 350"/>
+
+  <rect class="geo" x="1102" y="358" width="172" height="204"/>
+  <text x="1124" y="393" class="label">学習ゲート</text>
+  <text x="1124" y="427" class="body">α_l = σ(η_l)</text>
+  <text x="1124" y="461" class="small">z_mix =</text>
+  <text x="1124" y="484" class="small">(1 − α_l) z_attn</text>
+  <text x="1124" y="507" class="small">+ α_l z_ctx</text>
+  <text x="1124" y="545" class="small">η_l：層ごとの</text>
+  <text x="1124" y="562" class="small">学習パラメータ</text>
+
+  <rect class="base" x="1306" y="358" width="238" height="204"/>
+  <text x="1328" y="393" class="label">6 Deslice</text>
+  <text x="1328" y="421" class="body">更新済みtokenを</text>
+  <text x="1328" y="445" class="body">各点へ再配分</text>
+  <text x="1328" y="475" class="small">Sliceで作ったslice_weightsを使用</text>
+  <text x="1328" y="499" class="small">点ごとに異なる重みで混合</text>
+  <text x="1328" y="519" class="body">点群特徴 x'</text>
+  <text x="1328" y="545" class="small">shape: (N, C)</text>
+
+  <path class="arrow-blue" d="M210 460 L234 460"/><path class="arrow-blue" d="M412 460 L436 460"/><path class="arrow-blue" d="M624 460 L648 460"/><path class="arrow-blue" d="M830 460 L854 460"/><path class="arrow-orange" d="M1070 460 L1094 460"/><path class="arrow-orange" d="M1274 460 L1298 460"/>
+
+  <!-- Gate interpretation -->
+  <rect x="56" y="606" width="920" height="128" rx="8" fill="#102a43"/>
+  <text x="84" y="642" class="section" style="fill:#ffffff">α_l の解釈</text>
+  <line x1="344" y1="624" x2="344" y2="712" stroke="#486581" stroke-width="2"/>
+  <line x1="655" y1="624" x2="655" y2="712" stroke="#486581" stroke-width="2"/>
+  <text x="84" y="681" class="label" style="fill:#ffffff">α_l ≈ 0</text><text x="84" y="710" class="small" style="fill:#d9e2ec">Attend後のphysics tokenを重視</text>
+  <text x="378" y="681" class="label" style="fill:#ffffff">0 &lt; α_l &lt; 1</text><text x="378" y="710" class="small" style="fill:#d9e2ec">現在状態と共有contextを混合</text>
+  <text x="689" y="681" class="label" style="fill:#ffffff">α_l ≈ 1</text><text x="689" y="710" class="small" style="fill:#d9e2ec">共有context側を強く参照</text>
+
+  <rect x="1010" y="606" width="534" height="128" rx="8" fill="#ffffff" stroke="#d9e2ec" stroke-width="2"/>
+  <text x="1038" y="642" class="section">ゲート係数</text>
+  <rect x="1040" y="662" width="120" height="44" rx="8" fill="#fff7ed" stroke="#e87924" stroke-width="1.8"/><text x="1082" y="690" class="body">η_l</text>
+  <path class="arrow-orange" d="M1160 684 L1210 684"/>
+  <rect x="1218" y="662" width="120" height="44" rx="8" fill="#fff7ed" stroke="#e87924" stroke-width="1.8"/><text x="1240" y="690" class="body">sigmoid</text>
+  <path class="arrow-orange" d="M1338 684 L1388 684"/>
+  <rect x="1396" y="662" width="110" height="44" rx="8" fill="#e87924"/><text x="1434" y="690" class="body" style="fill:#ffffff">α_l</text>
+  <text x="1038" y="727" class="tiny">論文v3：η_lは入力依存ネットワークではなく、層ごとの学習スカラー</text>
+
+  <!-- Comparison -->
+  <text x="56" y="790" class="section">Transolverとの差分はAttendとDesliceの間に追加される</text>
+  <rect class="base" x="56" y="814" width="460" height="106"/>
+  <text x="82" y="848" class="label">変えない4工程</text>
+  <text x="82" y="878" class="body">Slice → Aggregate → Attend → Deslice</text>
+  <text x="82" y="904" class="small">physics tokenへ集約し、各点へ戻す流れを維持</text>
+  <rect class="geo" x="548" y="814" width="476" height="106"/>
+  <text x="574" y="848" class="label">追加する処理</text>
+  <text x="574" y="878" class="body">Cross-Attention(Q=z_attn, K/V=C_ctx) + 学習ゲート</text>
+  <text x="574" y="904" class="small">形状・運転条件を全層で読み戻す</text>
+  <rect class="context" x="1056" y="814" width="488" height="106"/>
+  <text x="1082" y="848" class="label">共有context C_ctx</text>
+  <text x="1082" y="878" class="body">同じcontext physics tokenをGALE 1 … Lへ供給</text>
+  <text x="1082" y="904" class="small">層ごとに再計算・更新しない</text>
+
+  <line x1="56" y1="948" x2="1544" y2="948" stroke="#d9e2ec" stroke-width="1.5"/>
+  <text x="56" y="976" class="tiny">Source: GeoTransolver, Adams et al., arXiv:2512.20399 (v3), Sec. 3.2</text>
+  <text x="1544" y="976" class="tiny" text-anchor="end">Difference 02 · GALE block</text>
+</svg>

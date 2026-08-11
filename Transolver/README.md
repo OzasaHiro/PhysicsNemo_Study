@@ -19,6 +19,7 @@ HTML は概要説明資料です。PDF は Notebook を実行した結果を保�
 | Path | Role |
 |---|---|
 | [Transolver_Flow.png](Transolver_Flow.png) | Transolver の処理フローを俯瞰する概要図 |
+| [GeoTransolver/](GeoTransolver/) | GeoTransolver の全体フローと、Transolver から追加された3つの処理を扱う図解資料 |
 | [transformer_transolver_flow_infographic.html](transformer_transolver_flow_infographic.html) | Transformer と Transolver の処理フローを図解する概要資料 |
 | [Transolver_Architecture.pdf](Transolver_Architecture.pdf) | Transolver の構造を説明する補助資料 |
 | [01_transformer_bottleneck_ja_handout.pdf](01_transformer_bottleneck_ja_handout.pdf) | Notebook 1 の実行済みPDF。Self-Attention と `O(N^2)` ボトルネックを確認 |
@@ -34,6 +35,7 @@ HTML は概要説明資料です。PDF は Notebook を実行した結果を保�
 3. [01_transformer_bottleneck_ja_handout.pdf](01_transformer_bottleneck_ja_handout.pdf)
 4. [02_physics_attention_transolver_ja_handout.pdf](02_physics_attention_transolver_ja_handout.pdf)
 5. [03_training_transolver_shiftwing_caseb_ja_full200_executed_handout.pdf](03_training_transolver_shiftwing_caseb_ja_full200_executed_handout.pdf)
+6. [GeoTransolver/README.md](GeoTransolver/README.md)
 
 Notebook を実行する場合は、[Notebook/setup_guide.md](Notebook/setup_guide.md) を確認してください。
 

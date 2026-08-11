@@ -17,6 +17,15 @@
 - Notebook 03 は、元教材の題材をそのまま再実行するのではなく、手元の別データでの検証結果に差し替え。
 - Notebook 04 は追って追加予定。
 
+## GeoTransolver References
+
+`Transolver/GeoTransolver/` の図解資料は、以下の論文と NVIDIA PhysicsNeMo ドキュメントを参照して、勉強会向けに独自に作図したものです。
+
+- Paper: https://arxiv.org/abs/2512.20399
+- NVIDIA PhysicsNeMo documentation: https://docs.nvidia.com/physicsnemo/latest/physicsnemo/examples/cfd/external_aerodynamics/transformer_models/README.html
+
+元論文の図版や公式ドキュメントのページをそのまま転載したものではありません。論文、公式ドキュメント、参照実装を利用する場合は、それぞれの配布元が定めるライセンス、利用条件、引用条件が適用されます。本リポジトリには元論文PDF、公式ドキュメントの複製、学習済みGeoTransolverモデルは同梱していません。
+
 ## External Dataset
 
 Notebook 03 では Shift-WING sample dataset への言及があります。

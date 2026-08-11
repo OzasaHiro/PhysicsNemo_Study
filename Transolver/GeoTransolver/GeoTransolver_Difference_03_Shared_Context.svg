@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">変更3：共有context C_ctxを構築して全GALE blockで再利用</title>
+  <desc id="desc">形状、グローバル条件、入力から形状へのマルチスケール特徴をContext ProjectorのSliceとAggregateでcontext physics tokenへ変換し、共有context C_ctxとして各GALE blockへ供給する処理。</desc>
+  <defs>
+    <style>
+      text { font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif; fill: #102a43; letter-spacing: 0; }
+      .title { font-size: 40px; font-weight: 700; }
+      .subtitle { font-size: 21px; fill: #486581; }
+      .section { font-size: 22px; font-weight: 700; }
+      .label { font-size: 19px; font-weight: 700; }
+      .body { font-size: 17px; }
+      .small { font-size: 14px; fill: #486581; }
+      .tiny { font-size: 12px; fill: #627d98; }
+      .box { fill: #ffffff; stroke: #2f6fb0; stroke-width: 2.1; rx: 8; }
+      .geo { fill: #fff7ed; stroke: #e87924; stroke-width: 2.3; rx: 8; }
+      .context { fill: #ecfdf5; stroke: #159974; stroke-width: 2.4; rx: 8; }
+      .arrow-blue { stroke: #2f6fb0; stroke-width: 3; fill: none; marker-end: url(#arrowBlue); }
+      .arrow-orange { stroke: #e87924; stroke-width: 3; fill: none; marker-end: url(#arrowOrange); }
+      .arrow-green { stroke: #159974; stroke-width: 3; fill: none; marker-end: url(#arrowGreen); }
+      .bus { stroke: #159974; stroke-width: 4; fill: none; }
+    </style>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2f6fb0"/></marker>
+    <marker id="arrowOrange" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e87924"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#159974"/></marker>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#f8fbfe"/>
+  <rect x="0" y="0" width="1600" height="122" fill="#ffffff"/>
+  <text x="54" y="56" class="title">変更3｜共有context C_ctx を1回構築し、全GALE blockで再利用</text>
+  <text x="56" y="92" class="subtitle">形状・運転条件・マルチスケール関係を、Attendで扱うphysics tokenと同じ表現へ揃える</text>
+  <line x1="54" y1="116" x2="1546" y2="116" stroke="#d9e2ec" stroke-width="2"/>
+
+  <!-- Context construction -->
+  <rect x="56" y="146" width="1000" height="560" rx="8" fill="#ffffff" stroke="#d9e2ec" stroke-width="2"/>
+  <text x="82" y="183" class="section">C_ctx（論文表記 C）を構成する3つの独立パス</text>
+
+  <!-- Inputs -->
+  <rect class="geo" x="82" y="215" width="270" height="94"/>
+  <text x="108" y="248" class="label">形状点群 G = {g_j}</text>
+  <text x="108" y="278" class="small">表面メッシュ / 境界点</text>
+  <rect class="geo" x="390" y="215" width="270" height="94"/>
+  <text x="416" y="248" class="label">グローバル条件 p</text>
+  <text x="416" y="278" class="small">Mach・迎角・Re など</text>
+  <rect class="geo" x="698" y="215" width="330" height="94"/>
+  <text x="724" y="248" class="label">X → G multi-scale関係</text>
+  <text x="724" y="278" class="small">各形状点 g_j の近傍にあるクエリ点群 X</text>
+
+  <!-- Processors -->
+  <rect class="box" x="82" y="355" width="270" height="112"/>
+  <text x="108" y="388" class="body">Context Projector T_geo</text>
+  <text x="108" y="421" class="body">Slice → Aggregate</text>
+  <text x="108" y="449" class="small">少数のcontext physics tokenへ集約</text>
+  <path class="arrow-blue" d="M217 309 L217 347"/>
+
+  <rect class="box" x="390" y="355" width="270" height="112"/>
+  <text x="416" y="388" class="body">Context Projector T_glob</text>
+  <text x="416" y="421" class="body">Slice → Aggregate</text>
+  <text x="416" y="449" class="small">運転条件をcontext physics token化</text>
+  <path class="arrow-blue" d="M525 309 L525 347"/>
+
+  <rect class="geo" x="698" y="337" width="330" height="148"/>
+  <text x="724" y="370" class="label">Geometric Processor Pi_s</text>
+  <text x="724" y="400" class="body">BQ(r_s,k_s) → MLP phi_s</text>
+  <text x="724" y="428" class="small">scaleごとに h_ctx,s(g_j)</text>
+  <line x1="724" y1="442" x2="1002" y2="442" stroke="#f0a36a"/>
+  <text x="724" y="468" class="small">続いて T_s で Slice → Aggregate</text>
+  <path class="arrow-orange" d="M863 309 L863 329"/>
+
+  <!-- Outputs -->
+  <rect x="82" y="518" width="270" height="60" rx="8" fill="#e5f0fa" stroke="#2f6fb0" stroke-width="1.8"/>
+  <text x="112" y="545" class="small">context physics token</text>
+  <text x="132" y="567" class="body">Z_geo = T_geo(G)</text>
+  <rect x="390" y="518" width="270" height="60" rx="8" fill="#e5f0fa" stroke="#2f6fb0" stroke-width="1.8"/>
+  <text x="420" y="545" class="small">context physics token</text>
+  <text x="438" y="567" class="body">Z_glob = T_glob(p)</text>
+  <rect x="698" y="518" width="330" height="60" rx="8" fill="#ffead7" stroke="#e87924" stroke-width="1.8"/>
+  <text x="724" y="545" class="small">context physics token</text>
+  <text x="724" y="567" class="body">Z_s = T_s(h_ctx,s), s = 1 … N_s</text>
+  <path class="arrow-blue" d="M217 467 L217 510"/>
+  <path class="arrow-blue" d="M525 467 L525 510"/>
+  <path class="arrow-orange" d="M863 485 L863 510"/>
+
+  <path class="arrow-green" d="M217 578 C217 610, 390 610, 420 626"/>
+  <path class="arrow-green" d="M525 578 L525 618"/>
+  <path class="arrow-green" d="M863 578 C863 610, 690 610, 660 626"/>
+  <rect x="160" y="626" width="792" height="58" rx="8" fill="#159974"/>
+  <text x="190" y="663" class="label" style="fill:#ffffff">C_ctx = [Z_geo, Z_glob, Z_1, …, Z_Ns]（論文表記 C）</text>
+
+  <!-- Reuse panel -->
+  <rect class="context" x="1100" y="146" width="444" height="560"/>
+  <text x="1128" y="183" class="section">共有contextを全層で再利用</text>
+  <rect x="1140" y="215" width="364" height="92" rx="8" fill="#159974"/>
+  <text x="1322" y="249" class="label" text-anchor="middle" style="fill:#ffffff">共有context C_ctx</text>
+  <text x="1322" y="278" class="small" text-anchor="middle" style="fill:#dff6ec">入力ごとに1回構築し、更新せず再利用</text>
+
+  <path class="bus" d="M1322 307 L1322 357"/>
+  <path class="bus" d="M1164 357 L1480 357"/>
+  <circle cx="1164" cy="357" r="5" fill="#159974"/><circle cx="1322" cy="357" r="5" fill="#159974"/><circle cx="1480" cy="357" r="5" fill="#159974"/>
+  <path class="arrow-green" d="M1164 357 L1164 390"/>
+  <path class="arrow-green" d="M1322 357 L1322 390"/>
+  <path class="arrow-green" d="M1480 357 L1480 390"/>
+
+  <rect class="box" x="1120" y="398" width="128" height="118"/>
+  <text x="1147" y="430" class="label">GALE 1</text>
+  <text x="1141" y="456" class="small">Q: physics</text>
+  <text x="1141" y="476" class="small">token</text>
+  <text x="1141" y="498" class="small">K,V: C_ctx</text>
+  <rect class="box" x="1258" y="398" width="128" height="118"/>
+  <text x="1285" y="430" class="label">GALE 2</text>
+  <text x="1279" y="456" class="small">Q: physics</text>
+  <text x="1279" y="476" class="small">token</text>
+  <text x="1279" y="498" class="small">K,V: C_ctx</text>
+  <rect class="box" x="1416" y="398" width="128" height="118"/>
+  <text x="1445" y="430" class="label">GALE L</text>
+  <text x="1437" y="456" class="small">Q: physics</text>
+  <text x="1437" y="476" class="small">token</text>
+  <text x="1437" y="498" class="small">K,V: C_ctx</text>
+  <text x="1393" y="464" class="section">…</text>
+
+  <rect x="1140" y="552" width="364" height="112" rx="8" fill="#102a43"/>
+  <text x="1166" y="585" class="label" style="fill:#ffffff">層が深くなっても直接参照</text>
+  <text x="1166" y="615" class="small" style="fill:#d9e2ec">形状情報の希薄化を抑える</text>
+  <text x="1166" y="640" class="small" style="fill:#d9e2ec">運転条件の情報が深い層で薄れることを抑える</text>
+
+  <!-- Context projector note -->
+  <rect x="56" y="744" width="720" height="154" rx="8" fill="#102a43"/>
+  <text x="84" y="781" class="section" style="fill:#ffffff">Context Projector T の要点</text>
+  <text x="84" y="820" class="body" style="fill:#ffffff">Physics-Attentionの Slice → Aggregate だけを使う</text>
+  <text x="84" y="851" class="small" style="fill:#d9e2ec">可変数の点を少数のcontext physics tokenへ集約し、Desliceは行わない</text>
+  <text x="84" y="879" class="small" style="fill:#d9e2ec">単純平均ではなく、学習したslice_weightsによる加重平均</text>
+
+  <!-- Direction distinction -->
+  <rect x="812" y="744" width="732" height="154" rx="8" fill="#ffffff" stroke="#d9e2ec" stroke-width="2"/>
+  <text x="838" y="781" class="section">同じball queryを逆向きにも使う</text>
+  <rect class="geo" x="838" y="810" width="310" height="66"/>
+  <text x="858" y="838" class="label">G → X：局所 u_i</text>
+  <text x="858" y="861" class="small">各クエリ点のMLP埋め込み x_iへ結合</text>
+  <rect class="context" x="1194" y="810" width="324" height="66"/>
+  <text x="1214" y="838" class="label">X → G：context Z_s</text>
+  <text x="1214" y="861" class="small">T_sのSlice → AggregateでC_ctxへ結合</text>
+  <path class="arrow-orange" d="M1148 843 L1186 843"/>
+
+  <line x1="56" y1="940" x2="1544" y2="940" stroke="#d9e2ec" stroke-width="1.5"/>
+  <text x="56" y="968" class="tiny">Source: GeoTransolver, Adams et al., arXiv:2512.20399 (v3), Sec. 3.3</text>
+  <text x="1544" y="968" class="tiny" text-anchor="end">Difference 03 · Shared context</text>
+</svg>
